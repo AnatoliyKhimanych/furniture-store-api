@@ -1,0 +1,51 @@
+# Виртуальные окружения Python
+.venv/
+venv/
+env/
+ENV/
+
+# Кэш Python и компилированные файлы
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Локальные файлы конфигурации и секреты
+.env
+*.env
+.secret
+secrets.json
+
+# Базы данных (для локальной разработки)
+*.sqlite3
+*.db
+
+# Файлы медиа и статики (если они собираются отдельно или генерируются в контейнере)
+media/
+staticfiles/
+static/CACHE/
+
+# Логи и отчеты тестирования
+*.log
+logs/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Системные файлы и кэш IDE
+.git/
+.gitignore
+.dockerignore
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+.DS_Store
+Thumbs.db
+
+# Инструменты сборки фронтенда (если используются в проекте)
+node_modules/
+npm-debug.log
