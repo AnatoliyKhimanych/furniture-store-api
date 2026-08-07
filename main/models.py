@@ -1,5 +1,12 @@
 from django.db import models
 
 class Furniture(models.Model):
+  CATEGORIES = [
+    ('table', 'Стол'),
+    ('chair', 'Стул'),
+    ('sofa', 'Диван')
+  ]
+
   name = models.CharField('Название', max_length=30)
   price = models.DecimalField(max_digits=10, decimal_places=2)
+  category = models.CharField(max_length=10, choices=CATEGORIES, db_index=True)
