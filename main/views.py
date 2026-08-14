@@ -1,4 +1,6 @@
 from django.shortcuts import render, get_object_or_404
+from django.utils import timezone
+from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from . import models
@@ -27,3 +29,32 @@ def get_furniture_detail(request, pk):
   serializer = serializers.FurnitureSerializer(furniture)
 
   return Response(serializer.data)
+
+@api_view(['GET', 'POST'])
+def orders(request):
+  if request.method == 'GET':
+    pass
+
+  if request.method == 'POST':
+    email = request.data['email']
+    goods_ids = request.data['goods']
+
+    furniture = list(models.Furniture.objects.filter(id__in=goods_ids))
+
+    if len(furniture) != len(goods_ids):
+      return Response({'detail': 'Один или несколько товаров не существует'}, status=status.HTTP_400_BAD_REQUEST)
+
+    total = 0
+
+    for furniture_item in furniture:
+      total += furniture_item.price
+
+    order = models.Order.objects.create(email=email, amount=total, date=timezone.now())
+
+    order.goods_list.set(furniture)
+
+    serializer = serializers.OrderSerializer(order)
+
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    
