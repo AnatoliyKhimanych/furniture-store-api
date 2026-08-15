@@ -9,3 +9,6 @@ django-environ>=0.11,<1.0
 
 # для прод-запуска в контейнере:
 gunicorn>=21.2,<23.0
+
+# django debag toolbar
+django-debug-toolbar
