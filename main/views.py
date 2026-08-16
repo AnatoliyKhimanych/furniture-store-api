@@ -58,7 +58,7 @@ def orders(request):
     for furniture_item in furniture:
       total += furniture_item.price
 
-    order = models.Order.objects.create(email=email, amount=total, date=timezone.now())
+    order = models.Order.objects.create(email=email, amount=total)
 
     order.goods_list.set(furniture)
 
