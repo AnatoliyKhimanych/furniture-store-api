@@ -33,7 +33,16 @@ def get_furniture_detail(request, pk):
 @api_view(['GET', 'POST'])
 def orders(request):
   if request.method == 'GET':
-    pass
+    email = request.query_params.get('email')
+
+    if not email:
+      return Response({"detail": 'Ошибка. Для полчения заказов нужно передать email клиента. Например: /?email=client@gmail.com'}, status=status.HTTP_400_BAD_REQUEST)
+
+    orders = models.Order.objects.filter(email=email)
+
+    serializer = serializers.OrderSerializer(orders, many=True)
+
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
   if request.method == 'POST':
     email = request.data['email']
