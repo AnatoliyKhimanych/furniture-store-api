@@ -12,7 +12,7 @@ class Furniture(models.Model):
   category = models.CharField(max_length=10, choices=CATEGORIES, db_index=True)
 
 class Order(models.Model):
-  email = models.EmailField()
+  email = models.EmailField(max_length=30, db_index=True)
   goods_list = models.ManyToManyField(Furniture)
   amount = models.DecimalField(max_digits=10, decimal_places=2)
   date = models.DateTimeField()
