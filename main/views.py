@@ -39,7 +39,7 @@ def orders(request):
     if not email:
       return Response({"detail": "Ошибка. Для полчения заказов нужно передать email клиента. Например: /?email=client@gmail.com"}, status=status.HTTP_400_BAD_REQUEST)
 
-    orders = models.Order.objects.filter(email=email)
+    orders = models.Order.objects.filter(email=email).prefetch_related('goods_list')
 
     serializer = serializers.OrderSerializer(orders, many=True)
 
