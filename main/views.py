@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404
-from django.utils import timezone
+from django.core.exceptions import ValidationError
+from django.core.validators import EmailValidator
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -36,7 +37,7 @@ def orders(request):
     email = request.query_params.get('email')
 
     if not email:
-      return Response({"detail": 'Ошибка. Для полчения заказов нужно передать email клиента. Например: /?email=client@gmail.com'}, status=status.HTTP_400_BAD_REQUEST)
+      return Response({"detail": "Ошибка. Для полчения заказов нужно передать email клиента. Например: /?email=client@gmail.com"}, status=status.HTTP_400_BAD_REQUEST)
 
     orders = models.Order.objects.filter(email=email)
 
@@ -45,13 +46,22 @@ def orders(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
   if request.method == 'POST':
-    email = request.data['email']
-    goods_ids = request.data['goods']
+
+    email = request.data.get('email')
+    goods_ids = request.data.get('goods')
+
+    err = validate_order_data(email, goods_ids)
+    if err:
+       return Response({"detail": f"{err}"}, status=status.HTTP_400_BAD_REQUEST)
 
     furniture = list(models.Furniture.objects.filter(id__in=goods_ids))
 
-    if len(furniture) != len(goods_ids):
-      return Response({'detail': 'Один или несколько товаров не существует'}, status=status.HTTP_400_BAD_REQUEST)
+    found_ids = {item.id for item in furniture}
+
+    missing_ids = set(goods_ids) - found_ids
+
+    if missing_ids:
+      return Response({'detail': f'ID товаров {missing_ids} не существуют'}, status=status.HTTP_400_BAD_REQUEST)
 
     total = 0
 
@@ -66,4 +76,29 @@ def orders(request):
 
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+def validate_order_data(email, goods_ids):
+    validator = EmailValidator()
+      
+    if email is None :
+        return 'Поле email обязательно'
+
+    if goods_ids is None :
+        return 'Поле goods обязательно'
     
+    try:
+        validator(email)
+
+    except ValidationError:
+       return 'Введите правильный адрес электронной почты.'
+
+    if not isinstance(goods_ids, list):
+        return 'goods должен быть списком'
+
+    if len(goods_ids) == 0:
+        return 'Список товаров не должен быть пустым'
+
+    if not all(type(goods_ids) is int and goods_ids > 0 for goods_ids in goods_ids):
+        return 'Все ID товаров в goods должны быть положительными числами'
+
+    if len(goods_ids) != len(set(goods_ids)):
+        return 'ID не должны повторяться'
