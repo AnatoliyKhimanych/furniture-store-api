@@ -1,6 +1,9 @@
 from django.shortcuts import render, get_object_or_404
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator
+from django.core.mail import send_mail
+from furnitureStore import settings
+
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -84,6 +87,8 @@ def orders(request):
 
         order.goods_list.set(furniture)
 
+        send_email(order)
+
         serializer = serializers.OrderSerializer(order)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -115,3 +120,26 @@ def validate_order_data(email, goods_ids):
 
     if len(goods_ids) != len(set(goods_ids)):
         return "ID не должны повторяться"
+
+
+def send_email(order):
+    items = order.goods_list.all()
+
+    item_names = "\n".join([f"• {item.name} - ${item.price}" for item in items])
+
+    subject = "Ваш заказ успешно создан"
+    message = (
+        f"Ваш заказ с email: {order.email} успешно создан!\n"
+        f"Товары в заказе:\n{item_names}\n"
+        f"Общая сумма: {order.amount}"
+    )
+    from_email = settings.EMAIL_HOST_USER
+    to_email = settings.EMAIL_HOST_USER
+
+    send_mail(
+        subject,
+        message,
+        from_email,
+        [to_email],
+        fail_silently=False,
+    )
