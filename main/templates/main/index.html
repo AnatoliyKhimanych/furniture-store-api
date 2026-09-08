@@ -1,11 +1,494 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Furniture Store</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Furniture Store — REST API мебельного магазина</title>
+<meta name="description" content="REST API мебельного магазина: каталог мебели, карточки товаров и оформление заказов по email.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #EFE7D8;
+    --panel: #E6DCC7;
+    --ink: #241C15;
+    --ink-soft: #5A4E3F;
+    --walnut: #3D2A1D;
+    --walnut-2: #4E3626;
+    --oak: #B98D5D;
+    --oak-line: #C9A876;
+    --sage: #5C6E4F;
+    --rust: #9A4520;
+    --brass: #8C6A22;
+    --serif: "Newsreader", Georgia, "Iowan Old Style", serif;
+    --mono: "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.55;
+  }
+
+  a { color: var(--rust); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  a:hover { color: var(--walnut); }
+
+  :focus-visible {
+    outline: 2px solid var(--rust);
+    outline-offset: 3px;
+  }
+
+  code, .mono {
+    font-family: var(--mono);
+    font-size: 0.86em;
+  }
+
+  .page {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* ---------- Hero ---------- */
+
+  .hero {
+    background: var(--walnut);
+    background-image: linear-gradient(180deg, var(--walnut-2), var(--walnut) 60%);
+    color: var(--paper);
+    margin: 0 -24px 56px;
+    padding: 56px 24px 44px;
+    border-bottom: 6px solid var(--oak);
+  }
+
+  .hero-inner {
+    max-width: 832px;
+    margin: 0 auto;
+    opacity: 0;
+    animation: rise 0.7s ease-out 0.1s forwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-inner { opacity: 1; animation: none; }
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-icons {
+    display: flex;
+    gap: 22px;
+    margin-bottom: 22px;
+    color: var(--oak-line);
+  }
+
+  .hero-icons svg { width: 40px; height: 40px; }
+
+  .kicker {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    color: var(--oak-line);
+    margin: 0 0 10px;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.4rem, 5vw, 3.4rem);
+    font-weight: 600;
+    line-height: 1.05;
+    margin: 0 0 14px;
+    letter-spacing: -0.01em;
+  }
+
+  .hero .lede {
+    max-width: 46ch;
+    font-size: 1.15rem;
+    color: #E3D8C2;
+    margin: 0 0 28px;
+  }
+
+  .base-url {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(201,168,118,0.4);
+    padding: 10px 16px;
+    font-family: var(--mono);
+    font-size: 0.88rem;
+    flex-wrap: wrap;
+  }
+
+  .base-url-label {
+    color: var(--oak-line);
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 0.9rem;
+  }
+
+  .base-url code { color: #F6EEDD; background: none; font-size: 0.95em; }
+
+  /* ---------- Sections ---------- */
+
+  section { margin-bottom: 60px; }
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--oak);
+  }
+
+  section > p.intro {
+    max-width: 65ch;
+    color: var(--ink-soft);
+    margin: -12px 0 24px;
+  }
+
+  /* ---------- Flow steps ---------- */
+
+  .steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-left: 2px dashed var(--oak-line);
+    margin-left: 14px;
+  }
+
+  .step {
+    display: flex;
+    gap: 20px;
+    padding: 0 0 32px 26px;
+    position: relative;
+  }
+
+  .step:last-child { padding-bottom: 4px; }
+
+  .step-num {
+    position: absolute;
+    left: -15px;
+    top: 0;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--paper);
+    border: 1.5px solid var(--walnut);
+    color: var(--walnut);
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .step-body { flex: 1; min-width: 0; }
+
+  .endpoint {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--panel);
+    border: 1px solid var(--oak-line);
+    padding: 6px 12px;
+    margin-bottom: 10px;
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+  }
+
+  .method {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 2px 7px;
+  }
+
+  .method.get { background: var(--sage); color: var(--paper); }
+  .method.post { background: var(--rust); color: var(--paper); }
+
+  .endpoint code { font-size: 0.92rem; }
+
+  .step-body p {
+    max-width: 60ch;
+    margin: 0 0 10px;
+    color: var(--ink-soft);
+  }
+
+  .step-body p code {
+    background: var(--panel);
+    padding: 1px 5px;
+    border: 1px solid var(--oak-line);
+  }
+
+  .example {
+    display: block;
+    background: var(--walnut);
+    color: #EFE7D8;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    padding: 12px 14px;
+    overflow-x: auto;
+    white-space: pre;
+    border-left: 3px solid var(--oak);
+  }
+
+  /* ---------- Categories ---------- */
+
+  .chip-list {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin: 0;
+    padding: 0;
+  }
+
+  .chip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--panel);
+    border: 1px solid var(--oak-line);
+    padding: 10px 16px;
+    clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px);
+  }
+
+  .chip svg { width: 24px; height: 24px; color: var(--walnut); flex-shrink: 0; }
+
+  .chip .chip-name { font-size: 0.98rem; }
+
+  .chip code {
+    color: var(--ink-soft);
+    font-size: 0.78rem;
+  }
+
+  .chip-note {
+    max-width: 65ch;
+    color: var(--ink-soft);
+    margin: 16px 0 0;
+  }
+
+  /* ---------- Spec tables ---------- */
+
+  .spec-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .spec-card {
+    background: var(--panel);
+    border: 1px solid var(--oak-line);
+    padding: 18px 20px 20px;
+    clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
+  }
+
+  .spec-card h3 {
+    font-family: var(--mono);
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0 0 14px;
+    color: var(--walnut);
+  }
+
+  .spec-card table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+  }
+
+  .spec-card td {
+    padding: 7px 0;
+    border-top: 1px solid rgba(61,42,29,0.15);
+    vertical-align: top;
+  }
+
+  .spec-card tr:first-child td { border-top: none; }
+
+  .spec-card td:first-child {
+    font-family: var(--mono);
+    color: var(--rust);
+    white-space: nowrap;
+    padding-right: 14px;
+    width: 38%;
+  }
+
+  .spec-card td:last-child { color: var(--ink-soft); }
+
+  /* ---------- Footer ---------- */
+
+  .footer {
+    border-top: 1px solid var(--oak-line);
+    padding-top: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+  }
+
+  .footer .stack {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+  }
+
+  @media (max-width: 640px) {
+    .hero { padding: 40px 20px 32px; }
+    .spec-grid { grid-template-columns: 1fr; }
+    .step { gap: 14px; }
+    .hero-icons svg { width: 32px; height: 32px; }
+  }
+</style>
 </head>
 <body>
-  <h1>REST API для мебельного магазина</h1>
+<div class="page">
+
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="hero-icons" aria-hidden="true">
+        <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="6" y1="12" x2="34" y2="12"/>
+          <line x1="10" y1="12" x2="10" y2="32"/>
+          <line x1="30" y1="12" x2="30" y2="32"/>
+        </svg>
+        <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 6 L10 20 M28 6 L28 20 M10 6 L28 6"/>
+          <line x1="8" y1="20" x2="30" y2="20"/>
+          <line x1="10" y1="20" x2="10" y2="34"/>
+          <line x1="28" y1="20" x2="28" y2="34"/>
+        </svg>
+        <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 28 L4 12 Q4 9 8 9 L10 9 L10 20 L30 20 L30 9 L32 9 Q36 9 36 12 L36 28"/>
+          <line x1="4" y1="28" x2="36" y2="28"/>
+          <line x1="6" y1="28" x2="6" y2="33"/>
+          <line x1="34" y1="28" x2="34" y2="33"/>
+        </svg>
+      </div>
+      <p class="kicker">Django REST Framework · PostgreSQL · Docker</p>
+      <h1>Furniture Store</h1>
+      <p class="lede">REST API мебельного магазина: каталог мебели, карточки товаров по ID и оформление заказов с подтверждением на почту.</p>
+      <div class="base-url">
+        <span class="base-url-label">Базовый адрес</span>
+        <code>{{ request.scheme }}://{{ request.get_host }}</code>
+      </div>
+    </div>
+  </header>
+
+  <section aria-labelledby="flow-heading">
+    <h2 id="flow-heading">От каталога до заказа</h2>
+    <p class="intro">Четыре запроса покрывают весь путь клиента — от просмотра мебели до истории его заказов.</p>
+    <ol class="steps">
+      <li class="step">
+        <span class="step-num">1</span>
+        <div class="step-body">
+          <div class="endpoint"><span class="method get">GET</span><code>/furniture/</code></div>
+          <p>Весь каталог мебели. Добавьте <code>?category=</code>, чтобы отфильтровать по типу.</p>
+          <code class="example">GET /furniture/?category=chair</code>
+        </div>
+      </li>
+      <li class="step">
+        <span class="step-num">2</span>
+        <div class="step-body">
+          <div class="endpoint"><span class="method get">GET</span><code>/furniture/&lt;id&gt;/</code></div>
+          <p>Карточка одного товара по идентификатору. Если товара нет — ответ <code>404</code>.</p>
+          <code class="example">GET /furniture/1/</code>
+        </div>
+      </li>
+      <li class="step">
+        <span class="step-num">3</span>
+        <div class="step-body">
+          <div class="endpoint"><span class="method post">POST</span><code>/orders/</code></div>
+          <p>Создаёт заказ по списку ID товаров. Сумма считается на сервере, клиенту уходит письмо с подтверждением.</p>
+          <code class="example">POST /orders/
+{
+  "email": "client@example.com",
+  "goods": [1, 2]
+}</code>
+        </div>
+      </li>
+      <li class="step">
+        <span class="step-num">4</span>
+        <div class="step-body">
+          <div class="endpoint"><span class="method get">GET</span><code>/orders/?email=</code></div>
+          <p>Список заказов клиента. Параметр <code>email</code> обязателен.</p>
+          <code class="example">GET /orders/?email=client@example.com</code>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section aria-labelledby="categories-heading">
+    <h2 id="categories-heading">Категории мебели</h2>
+    <ul class="chip-list">
+      <li class="chip">
+        <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="6" y1="12" x2="34" y2="12"/>
+          <line x1="10" y1="12" x2="10" y2="32"/>
+          <line x1="30" y1="12" x2="30" y2="32"/>
+        </svg>
+        <span><span class="chip-name">Стол</span><br><code>table</code></span>
+      </li>
+      <li class="chip">
+        <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 6 L10 20 M28 6 L28 20 M10 6 L28 6"/>
+          <line x1="8" y1="20" x2="30" y2="20"/>
+          <line x1="10" y1="20" x2="10" y2="34"/>
+          <line x1="28" y1="20" x2="28" y2="34"/>
+        </svg>
+        <span><span class="chip-name">Стул</span><br><code>chair</code></span>
+      </li>
+      <li class="chip">
+        <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 28 L4 12 Q4 9 8 9 L10 9 L10 20 L30 20 L30 9 L32 9 Q36 9 36 12 L36 28"/>
+          <line x1="4" y1="28" x2="36" y2="28"/>
+          <line x1="6" y1="28" x2="6" y2="33"/>
+          <line x1="34" y1="28" x2="34" y2="33"/>
+        </svg>
+        <span><span class="chip-name">Диван</span><br><code>sofa</code></span>
+      </li>
+    </ul>
+    <p class="chip-note">Значение поля <code>category</code> используется как в фильтре каталога, так и в ответах API.</p>
+  </section>
+
+  <section aria-labelledby="models-heading">
+    <h2 id="models-heading">Модели данных</h2>
+    <div class="spec-grid">
+      <div class="spec-card">
+        <h3>Furniture</h3>
+        <table>
+          <tr><td>id</td><td>число, присваивается автоматически</td></tr>
+          <tr><td>name</td><td>строка, до 30 символов</td></tr>
+          <tr><td>price</td><td>цена, десятичное число</td></tr>
+          <tr><td>category</td><td>table / chair / sofa</td></tr>
+        </table>
+      </div>
+      <div class="spec-card">
+        <h3>Order</h3>
+        <table>
+          <tr><td>email</td><td>почта клиента</td></tr>
+          <tr><td>goods_list</td><td>список товаров в заказе</td></tr>
+          <tr><td>amount</td><td>сумма, считается сервером</td></tr>
+          <tr><td>date</td><td>дата создания заказа</td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>Учебный проект — REST API мебельного магазина.</p>
+    <p class="stack">Django REST Framework · PostgreSQL · Docker</p>
+  </footer>
+
+</div>
 </body>
 </html>
