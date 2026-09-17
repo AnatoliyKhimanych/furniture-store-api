@@ -38,6 +38,10 @@ def get_furniture_detail(request, pk):
     return Response(serializer.data)
 
 
+def page_not_found(request, exception):
+    return render(request, "main/404.html", status=404)
+
+
 @api_view(["GET", "POST"])
 def orders(request):
     if request.method == "GET":
